@@ -1,7 +1,10 @@
 # Lab 21 — Evaluation Report
 
-**Họ tên**: <điền>  **MSSV**: <điền>  **Ngày**: <điền>
-**Tier**: `<CPU|LAPTOP|T4|BIGGPU>`  **Base model**: `<model id>`  **GPU thực tế**: `<T4 16GB / ...>`
+**Họ tên**: Nguyễn Việt Hoàng Hải  **MSSV**: 2A202602967  **Ngày**: 08/10/2026
+**Tier**: `T4`  **Base model**: `unsloth/Qwen3.5-4B`  **GPU thực tế**: Tesla T4, 14,56 GiB VRAM
+
+> Bản nháp đang hoàn thiện. NB1 đã chạy trên CPU; các số đo NB2–NB5 sẽ được điền từ
+> artefact thật sau khi có GPU. Không dùng số ước lượng thay cho kết quả thí nghiệm.
 
 > Mọi con số dưới đây phải khớp với file trong `results/`. Grader kiểm tra chéo.
 >
@@ -15,14 +18,23 @@
 
 | | |
 |---|---|
-| Dataset | `<tên + số mẫu>` (mặc định: 250 ticket CSKH → JSON triage) |
-| Train / val | `<n>` / `<n>` (seed 42) |
-| `max_length` | `<n>` — p95 đo được là `<n>` *(results/token_stats.json)* |
-| `MASK_MODE` | `<assistant-only | ...>` |
-| Epochs / max_steps | `<n>` |
+| Dataset | 250 ticket CSKH tiếng Việt → JSON triage 4 trường |
+| Train / val | 225 / 25 (seed 42) |
+| `max_length` | 1024 theo tier T4; p95 đo được 98, gợi ý 256 *(results/token_stats.json)* |
+| `MASK_MODE` | `assistant-only` |
+| Epochs / max_steps | 2 epoch theo mặc định; số step sẽ lấy từ `results/runs.csv` sau NB3 |
 
-**Template có giữ khối `<think>` không?** `<có/không>` — *(results/template_check.json)*
-Nếu không: bạn đã xử lý thế nào?
+**Template có giữ khối `<think>` không?** Có. `template_check.json` ghi
+`open_tag_present=true`, `body_present=true`. Corpus mặc định chỉ có đáp án JSON,
+không chứa reasoning trace để fine-tune.
+
+**Lựa chọn thí nghiệm.** Model 4B là cấu hình mặc định cho T4 16 GB trong lab; tôi
+giữ cùng model cho baseline và LoRA để phép so sánh công bằng. Corpus CSKH tiếng Việt
+có nhãn 4 trường, giúp chấm tự động theo từng trường và kiểm tra định dạng JSON.
+Tập đánh giá gồm 50 ticket target và 15 câu regression; tôi sẽ đo baseline (a), (b)
+trước khi train. `max_length=1024` hiện là trần của tier. Độ dài lớn nhất đo được chỉ
+101 token, và T4 dùng batch 1 nên không phát sinh padding giữa các mẫu; tôi sẽ ghi rõ
+sự khác biệt với mức 256 do p95 gợi ý thay vì coi 1024 là con số đo được.
 
 ---
 
@@ -30,14 +42,16 @@ Nếu không: bạn đã xử lý thế nào?
 
 | | |
 |---|---|
-| `supervised_fraction` | `<0.xx>` |
-| Câu trả lời nằm trong loss | `<true>` |
-| Câu hỏi KHÔNG nằm trong loss | `<true>` |
+| `supervised_fraction` | 0.4149 (39/94 token ở mẫu kiểm tra) |
+| Câu trả lời nằm trong loss | `true` |
+| Câu hỏi KHÔNG nằm trong loss | `true` |
 
 Dán 3–5 dòng đầu của đoạn được tính loss:
 
 ```
-<paste>
+</think>
+
+{"intent": "doi_tra", "urgency": "trung_binh", "product": "balo laptop", "sentiment": "trung_tinh"}<|im_end|>
 ```
 
 ---
@@ -46,12 +60,14 @@ Dán 3–5 dòng đầu của đoạn được tính loss:
 
 | Run | target | regression | format | latency (ms) |
 |---|---|---|---|---|
-| (a) base + naive prompt | | | | |
-| (b) base + optimized prompt | | | | |
+| (a) base + naive prompt | 0.0000 | 0.7911 | 0.0000 | 3387.2 |
+| (b) base + optimized prompt | 0.7650 | 0.7911 | 1.0000 | 1027.6 |
 | (c) LoRA fine-tune | | | | |
 
-**(b) có thật sự mạnh hơn (a) không?** `<có/không>` — nếu không, bạn đã cải thiện (b) thế nào?
-Bạn có sửa `OPTIMIZED_PROMPT` không? Nếu có: **làm mạnh lên hay yếu đi**, và vì sao?
+**(b) có thật sự mạnh hơn (a) không?** Có: target tăng từ 0 lên 0.765,
+format từ 0 lên 1.000. Tôi giữ nguyên `OPTIMIZED_PROMPT` của repo (SHA
+`719e74d3b6232053`). NB2 hoàn tất và đóng băng trước khi NB3 bắt đầu trên Colab.
+Tập đánh giá được dùng đầy đủ: 50 ticket target và 15 câu regression; không đặt `EVAL_LIMIT`.
 
 ---
 

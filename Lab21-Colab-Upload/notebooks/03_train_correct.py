@@ -164,7 +164,6 @@ print(f"train {elapsed:.0f}s  final loss {result.training_loss:.4f}")
 out = ROOT / "adapters" / SPEC.key
 trainer.model.save_pretrained(out)
 tok.save_pretrained(out)
-report.write_json(trainer.state.log_history, "loss_correct.json", results_dir=ROOT / "results")
 print("saved ->", out)
 
 row = train.summarize_run(SPEC, TIER, targets, trainable, elapsed, generate.peak_vram_gb())

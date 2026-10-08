@@ -96,10 +96,6 @@ frozen = {
     "smoke_mode": bool(EVAL_LIMIT),
 }
 report.write_json(frozen, "baselines_frozen.json", results_dir=ROOT / "results")
-report.write_json(
-    {"target": target, "preds_a": preds_a, "preds_b": preds_b,
-     "regression": regression, "rpreds_b": rpreds_b},
-    "baseline_predictions.json", results_dir=ROOT / "results")
 print(json.dumps(frozen, ensure_ascii=False, indent=2))
 
 # %% [markdown]

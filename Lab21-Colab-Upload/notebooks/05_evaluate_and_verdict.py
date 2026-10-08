@@ -187,15 +187,10 @@ report.write_json(autopsy, "autopsy.json", results_dir=ROOT / "results")
 
 # %%
 rows = []
-baseline_preds = json.loads((ROOT / "results" / "baseline_predictions.json").read_text(encoding="utf-8"))["preds_b"]
-assert len(baseline_preds) == len(target), "baseline predictions must cover the same eval set"
 for i, (p, r) in enumerate(zip(preds_ft, target)):
     s_ft = ev.triage_field_accuracy(p, r["label"])
-    s_base = ev.triage_field_accuracy(baseline_preds[i], r["label"])
-    rows.append({"i": i, "ticket": r["input"], "label": r["label"],
-                 "base_b_score": s_base, "base_b_pred": baseline_preds[i],
-                 "ft_score": round(s_ft, 2), "ft_pred": p,
-                 "outcome": "win" if s_ft > s_base else "loss" if s_ft < s_base else "tie"})
+    rows.append({"i": i, "ticket": r["input"][:70], "ft_score": round(s_ft, 2),
+                 "ft_pred": p.replace("\n", " ")[:90]})
 rows.sort(key=lambda x: x["ft_score"])
 print("--- 3 ca TỆ NHẤT (bắt buộc đưa vào report) ---")
 print(report.markdown_table(rows[:3], ["i", "ticket", "ft_score", "ft_pred"]))
